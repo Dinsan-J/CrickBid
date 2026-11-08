@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { TournamentProvider } from './context/TournamentContext';
 import { NotificationProvider } from './context/NotificationContext';
 import './index.css';
 
@@ -12,9 +13,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <NotificationProvider>
-            <App />
-          </NotificationProvider>
+          <TournamentProvider>
+            <NotificationProvider>
+              <App />
+            </NotificationProvider>
+          </TournamentProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

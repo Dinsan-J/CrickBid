@@ -11,22 +11,25 @@ import {
   Radio
 } from 'lucide-react';
 import { useAuth, ROLES, ROLE_LABELS } from '../../context/AuthContext';
+import { useTournament } from '../../context/TournamentContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useNotifications } from '../../context/NotificationContext';
 import ProfileDropdown from './ProfileDropdown';
 import Badge from '../ui/Badge';
+import AuctionFormatSwitcher from './AuctionFormatSwitcher';
 import { Link } from 'react-router-dom';
 
 export default function TopNav({ openMobile }) {
   const { user, currentRole, switchRole } = useAuth();
+  const { tournament } = useTournament();
   const { isDark, toggleTheme } = useTheme();
   const { unreadCount, toggleDrawer } = useNotifications();
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-30 h-16 bg-white/90 dark:bg-crick-navy/90 backdrop-blur-md border-b border-slate-200 dark:border-crick-border px-4 sm:px-6 flex items-center justify-between gap-4 transition-colors">
-      {/* Left Area: Mobile Menu + Tournament Switcher */}
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-30 h-16 bg-white/90 dark:bg-crick-navy/90 backdrop-blur-md border-b border-slate-200 dark:border-crick-border px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 transition-colors">
+      {/* Left Area: Mobile Menu + Tournament Switcher + Auction Format Toggle */}
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* Mobile Sidebar Trigger */}
         <button
           onClick={openMobile}
@@ -36,16 +39,16 @@ export default function TopNav({ openMobile }) {
         </button>
 
         {/* Active Tournament Selector Pill */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-crick-surface border border-slate-200 dark:border-crick-border text-xs">
-          <Trophy className="w-4 h-4 text-crick-lime" />
-          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[180px]">
-            {user?.activeTournament?.name || 'Select Tournament'}
+        <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-crick-surface border border-slate-200 dark:border-crick-border text-xs">
+          <Trophy className="w-4 h-4 text-emerald-500 dark:text-crick-lime" />
+          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[160px]">
+            {tournament?.name || user?.activeTournament?.name || 'Tournament'}
           </span>
-          <Badge variant="lime" size="sm">
-            {user?.activeTournament?.currency || 'LKR'}
-          </Badge>
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse ml-1" />
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse ml-0.5" />
         </div>
+
+        {/* Premium Animated Auction Format Switcher (POINTS / LKR) */}
+        <AuctionFormatSwitcher />
 
         {/* Quick Link to Live Auction Room */}
         <Link
@@ -53,7 +56,8 @@ export default function TopNav({ openMobile }) {
           className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 dark:text-red-400 border border-red-500/30 text-xs font-bold transition-all shadow-sm"
         >
           <Radio className="w-3.5 h-3.5 animate-pulse text-red-500" />
-          <span>Gavel Room Live</span>
+          <span className="hidden lg:inline">Gavel Room Live</span>
+          <span className="lg:hidden">Live</span>
         </Link>
       </div>
 
