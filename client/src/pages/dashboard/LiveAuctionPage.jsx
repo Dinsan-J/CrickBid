@@ -18,6 +18,7 @@ import {
   History
 } from 'lucide-react';
 import { useAuth, ROLES } from '../../context/AuthContext';
+import { useTournament } from '../../context/TournamentContext';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
@@ -25,6 +26,10 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 
 export default function LiveAuctionPage() {
   const { currentRole, user } = useAuth();
+  const { format, currencyCode, isPoints, formatAmount, formatCompact } = useTournament();
+
+  // Dynamic values depending on active format
+  const multiplier = isPoints ? 0.01 : 1; // 100 LKR = 1 PT
 
   // Simulated Auction State
   const [activePlayer, setActivePlayer] = useState({
@@ -222,7 +227,7 @@ export default function LiveAuctionPage() {
               <div className="flex items-center justify-between text-xs pt-1 border-t border-crick-border">
                 <span className="text-crick-textMuted">Base Reserve Price:</span>
                 <span className="font-mono font-bold text-slate-200">
-                  LKR {activePlayer.basePrice.toLocaleString()}
+                  {formatAmount(activePlayer.basePrice)}
                 </span>
               </div>
             </CardContent>
@@ -251,10 +256,10 @@ export default function LiveAuctionPage() {
             {/* Current Highest Bid Display */}
             <div className="space-y-1">
               <span className="text-xs uppercase font-extrabold tracking-widest text-crick-lime">
-                CURRENT HIGHEST BID
+                CURRENT HIGHEST BID ({currencyCode})
               </span>
               <div className="font-mono text-4xl sm:text-5xl font-black text-white tracking-tight">
-                LKR {currentBid.toLocaleString()}
+                {formatAmount(currentBid)}
               </div>
 
               {/* Holding Team Banner */}
@@ -275,7 +280,7 @@ export default function LiveAuctionPage() {
             <div className="py-2">
               {hammerStage === 'GOING_ONCE' && (
                 <div className="px-4 py-2 rounded-xl bg-amber-500/20 text-amber-400 font-extrabold text-sm uppercase tracking-wider border border-amber-500/40 animate-pulse">
-                  🔨 GOING ONCE AT LKR {currentBid.toLocaleString()}!
+                  🔨 GOING ONCE AT {formatAmount(currentBid)}!
                 </div>
               )}
               {hammerStage === 'GOING_TWICE' && (
@@ -285,12 +290,12 @@ export default function LiveAuctionPage() {
               )}
               {hammerStage === 'SOLD' && (
                 <div className="px-4 py-2 rounded-xl bg-emerald-500/20 text-crick-lime font-black text-base uppercase tracking-wider border border-emerald-500/40">
-                  🎉 SOLD TO {holdingTeam.name.toUpperCase()}!
+                  🎉 SOLD TO {holdingTeam.name.toUpperCase()} FOR {formatAmount(currentBid)}!
                 </div>
               )}
               {hammerStage === 'NONE' && (
                 <div className="text-xs text-crick-textMuted font-mono">
-                  Bidding open • Minimum next increment: +LKR 50,000
+                  Bidding open • Minimum next increment: +{formatAmount(50000)}
                 </div>
               )}
             </div>
@@ -300,7 +305,7 @@ export default function LiveAuctionPage() {
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-slate-300">Quick Bid Increment</span>
                 <span className="text-crick-textMuted font-mono">
-                  Your Remaining Purse: <strong className="text-crick-lime">LKR 3,450,000</strong>
+                  Your Remaining Purse: <strong className="text-crick-lime">{formatAmount(3450000)}</strong>
                 </span>
               </div>
 
@@ -311,7 +316,7 @@ export default function LiveAuctionPage() {
                   icon={ArrowUp}
                   onClick={() => handlePlaceBid(25000)}
                 >
-                  +25K
+                  {isPoints ? '+250 PTS' : '+25K'}
                 </Button>
                 <Button
                   variant="primary"
@@ -319,7 +324,7 @@ export default function LiveAuctionPage() {
                   icon={ArrowUp}
                   onClick={() => handlePlaceBid(50000)}
                 >
-                  +50K
+                  {isPoints ? '+500 PTS' : '+50K'}
                 </Button>
                 <Button
                   variant="primary"
@@ -327,7 +332,7 @@ export default function LiveAuctionPage() {
                   icon={ArrowUp}
                   onClick={() => handlePlaceBid(100000)}
                 >
-                  +100K
+                  {isPoints ? '+1,000 PTS' : '+100K'}
                 </Button>
               </div>
             </div>
@@ -408,7 +413,7 @@ export default function LiveAuctionPage() {
                   <div className="flex items-center justify-between">
                     <span className="truncate max-w-[120px]">{item.team}</span>
                     <span className="font-mono text-crick-lime">
-                      LKR {item.amount.toLocaleString()}
+                      {formatAmount(item.amount)}
                     </span>
                   </div>
                   <div className="text-[10px] text-slate-500 font-mono mt-0.5">
@@ -422,13 +427,13 @@ export default function LiveAuctionPage() {
           {/* Quick Squad & Purse Status */}
           <Card className="p-4 space-y-3">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-300 block">
-              Table Purse Standing
+              Table Purse Standing ({currencyCode})
             </span>
             {[
-              { name: 'Colombo Kings', rem: 'LKR 3.45M', slots: '11/15' },
-              { name: 'Kandy Warriors', rem: 'LKR 2.90M', slots: '10/15' },
-              { name: 'Galle Titans', rem: 'LKR 4.20M', slots: '9/15' },
-              { name: 'Jaffna Stallions', rem: 'LKR 5.50M', slots: '8/15' }
+              { name: 'Colombo Kings', rem: formatCompact(3450000), slots: '11/15' },
+              { name: 'Kandy Warriors', rem: formatCompact(2900000), slots: '10/15' },
+              { name: 'Galle Titans', rem: formatCompact(4200000), slots: '9/15' },
+              { name: 'Jaffna Stallions', rem: formatCompact(5500000), slots: '8/15' }
             ].map((t, idx) => (
               <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-crick-border/50 last:border-0">
                 <span className="font-semibold text-slate-300">{t.name}</span>
@@ -451,7 +456,7 @@ export default function LiveAuctionPage() {
           setConfirmSoldOpen(false);
         }}
         title="Hammer Strike: Sell Player"
-        message={`Confirm sale of ${activePlayer.name} to ${holdingTeam.name} for LKR ${currentBid.toLocaleString()}? This will deduct the team purse and send instant WhatsApp alerts.`}
+        message={`Confirm sale of ${activePlayer.name} to ${holdingTeam.name} for ${formatAmount(currentBid)}? This will deduct the team purse and send instant WhatsApp alerts.`}
         confirmText="Confirm Sale (Sold)"
         variant="primary"
       />

@@ -1,5 +1,6 @@
 import { Player } from '../models/Player.js';
 import { Tournament } from '../models/Tournament.js';
+import { AuditLog } from '../models/AuditLog.js';
 
 export async function registerPlayer(req, res) {
   try {
@@ -136,9 +137,12 @@ export async function registerPlayer(req, res) {
 
 export async function getPlayers(req, res) {
   try {
-    const { status, role, search } = req.query;
+    const { status, role, search, tournamentId } = req.query;
 
     let query = {};
+    if (tournamentId) {
+      query.tournamentId = tournamentId;
+    }
 
     if (status && status !== 'ALL') {
       query.status = status;
@@ -161,10 +165,10 @@ export async function getPlayers(req, res) {
 
     const players = await Player.find(query).sort({ createdAt: -1 });
 
-    const totalCount = await Player.countDocuments();
-    const pendingCount = await Player.countDocuments({ status: 'PENDING' });
-    const approvedCount = await Player.countDocuments({ status: { $in: ['APPROVED', 'UNDER_THE_HAMMER', 'SOLD'] } });
-    const rejectedCount = await Player.countDocuments({ status: 'REJECTED' });
+    const totalCount = await Player.countDocuments(tournamentId ? { tournamentId } : {});
+    const pendingCount = await Player.countDocuments({ ...(tournamentId ? { tournamentId } : {}), status: 'PENDING' });
+    const approvedCount = await Player.countDocuments({ ...(tournamentId ? { tournamentId } : {}), status: { $in: ['APPROVED', 'UNDER_THE_HAMMER', 'SOLD'] } });
+    const rejectedCount = await Player.countDocuments({ ...(tournamentId ? { tournamentId } : {}), status: 'REJECTED' });
 
     return res.json({
       success: true,
@@ -203,19 +207,23 @@ export async function getPlayerById(req, res) {
 export async function updatePlayerStatus(req, res) {
   try {
     const { id } = req.params;
-    const { status, userRole } = req.body;
+    const { status } = req.body;
 
     const allowedStatuses = ['PENDING', 'APPROVED', 'REJECTED', 'SHORTLISTED', 'UNDER_THE_HAMMER', 'SOLD'];
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid player status.' });
     }
 
-    // Role check: Only ORGANISER or PLATFORM_ADMIN can approve/reject
-    const allowedRoles = ['ORGANISER', 'PLATFORM_ADMIN'];
-    if (userRole && !allowedRoles.includes(userRole)) {
+    // SERVER-AUTHORITATIVE PERMISSION CHECK:
+    // Only TOURNAMENT_ADMIN, TOURNAMENT_ORGANISER, ORG_OWNER, ORG_ADMIN, or SUPER_ADMIN can approve/reject.
+    // Never trust a role passed in req.body!
+    const effectiveRole = req.userContext?.effectiveRole || req.userContext?.orgRole || req.userContext?.tournamentRole;
+    const allowedRoles = ['SUPER_ADMIN', 'ORG_OWNER', 'ORG_ADMIN', 'TOURNAMENT_ORGANISER', 'TOURNAMENT_ADMIN'];
+
+    if (!req.userContext?.isSuperAdmin && (!effectiveRole || !allowedRoles.includes(effectiveRole))) {
       return res.status(403).json({
         success: false,
-        message: 'Permission denied: Only Tournament Organisers or Platform Administrators can approve or reject player registrations.'
+        message: 'Permission denied: Only authorised Tournament Organisers or Administrators can approve or reject player registrations.'
       });
     }
 
@@ -226,6 +234,16 @@ export async function updatePlayerStatus(req, res) {
 
     player.status = status;
     await player.save();
+
+    await AuditLog.create({
+      actorUserId: req.user?._id,
+      tournamentId: player.tournamentId,
+      action: 'PLAYER_STATUS_UPDATED',
+      entityType: 'Player',
+      entityId: String(player._id),
+      details: { fullName: player.fullName, newStatus: status, updatedByRole: effectiveRole },
+      ipAddress: req.ip || ''
+    });
 
     return res.json({
       success: true,

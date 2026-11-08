@@ -1,11 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Gavel, Radio, Calendar, Clock, ListOrdered, CheckCircle2, ArrowRight } from 'lucide-react';
+import { useTournament } from '../../context/TournamentContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 
 export default function AuctionsPage() {
+  const { format, currencyCode, isPoints, formatAmount } = useTournament();
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -31,7 +34,9 @@ export default function AuctionsPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <Badge variant="live" size="sm" dot>Live Now</Badge>
-              <Badge variant="amber" size="sm">Money (LKR)</Badge>
+              <Badge variant={isPoints ? 'purple' : 'amber'} size="sm">
+                {isPoints ? 'Points Model (PTS)' : 'Money (LKR)'}
+              </Badge>
             </div>
             <CardTitle className="pt-2">MCA Premier League 2026 — Main Auction</CardTitle>
             <CardDescription>Conducted by: Charu Sharma (Platform Managed)</CardDescription>
@@ -54,7 +59,7 @@ export default function AuctionsPage() {
             </div>
 
             <p className="text-slate-600 dark:text-slate-300">
-              Active player on podium: <strong>Pathum Nissanka</strong>. Current highest bid LKR 850,000 by Colombo Kings.
+              Active player on podium: <strong>Pathum Nissanka</strong>. Current highest bid {formatAmount(850000)} by Colombo Kings.
             </p>
           </CardContent>
 

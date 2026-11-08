@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Gavel, Clock, ArrowUp, CheckCircle2, ShieldCheck, Flame, Radio } from 'lucide-react';
+import { useTournament } from '../../context/TournamentContext';
 import Badge from '../ui/Badge';
 
 export default function HeroAuctionPreview() {
+  const { format, currencyCode, isPoints, formatAmount, formatCompact } = useTournament();
   const [currentBid, setCurrentBid] = useState(850000);
   const [holdingTeam, setHoldingTeam] = useState('Colombo Kings');
   const [stage, setStage] = useState('GOING_TWICE'); // 'BIDDING', 'GOING_ONCE', 'GOING_TWICE', 'SOLD'
@@ -12,9 +14,9 @@ export default function HeroAuctionPreview() {
 
   // Teams in the demo auction
   const teams = [
-    { name: 'Colombo Kings', short: 'CK', budget: 'LKR 3.45M', color: '#1E40AF', active: holdingTeam === 'Colombo Kings' },
-    { name: 'Kandy Warriors', short: 'KW', budget: 'LKR 2.90M', color: '#B91C1C', active: holdingTeam === 'Kandy Warriors' },
-    { name: 'Galle Titans', short: 'GT', budget: 'LKR 4.20M', color: '#047857', active: holdingTeam === 'Galle Titans' }
+    { name: 'Colombo Kings', short: 'CK', budget: formatCompact(3450000), color: '#1E40AF', active: holdingTeam === 'Colombo Kings' },
+    { name: 'Kandy Warriors', short: 'KW', budget: formatCompact(2900000), color: '#B91C1C', active: holdingTeam === 'Kandy Warriors' },
+    { name: 'Galle Titans', short: 'GT', budget: formatCompact(4200000), color: '#047857', active: holdingTeam === 'Galle Titans' }
   ];
 
   // Auto-cycle simulation to keep the hero preview dynamic and engaging
@@ -148,7 +150,7 @@ export default function HeroAuctionPreview() {
                 animate={{ scale: 1, opacity: 1 }}
                 className="font-mono text-3xl sm:text-4xl font-black text-white tracking-tight mt-0.5"
               >
-                LKR {currentBid.toLocaleString()}
+                {formatAmount(currentBid)}
               </motion.div>
               <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-300">
                 <span>Held by:</span>
@@ -186,7 +188,7 @@ export default function HeroAuctionPreview() {
                   <div className="border-4 border-emerald-400 text-emerald-400 font-mono font-black text-2xl sm:text-3xl px-6 py-2 rounded-xl tracking-widest shadow-glow-emerald uppercase text-center">
                     SOLD!
                     <span className="block text-xs font-sans font-bold tracking-normal text-white mt-0.5">
-                      To {holdingTeam} • LKR {currentBid.toLocaleString()}
+                      To {holdingTeam} • {formatAmount(currentBid)}
                     </span>
                   </div>
                 </motion.div>
@@ -198,9 +200,9 @@ export default function HeroAuctionPreview() {
           <div className="space-y-2 pt-1">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-semibold uppercase tracking-wider text-[10px]">
-                Franchise Purse Standing
+                Franchise Purse Standing ({currencyCode})
               </span>
-              <span className="text-[10px] font-mono">Min Increment: +LKR 50K</span>
+              <span className="text-[10px] font-mono">Min Increment: +{formatAmount(50000)}</span>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
@@ -238,14 +240,14 @@ export default function HeroAuctionPreview() {
               className="flex-1 py-2 px-3 rounded-xl bg-crick-surface hover:bg-crick-border text-xs font-bold text-slate-200 border border-crick-border flex items-center justify-center gap-1.5 transition-all active:scale-95"
             >
               <ArrowUp className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Bid +LKR 50,000</span>
+              <span>Bid +{formatAmount(50000)}</span>
             </button>
             <button
               onClick={() => triggerUserBid(100000)}
               className="flex-1 py-2 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-xs font-bold text-emerald-400 border border-emerald-500/30 flex items-center justify-center gap-1.5 transition-all active:scale-95"
             >
               <ArrowUp className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Bid +LKR 100,000</span>
+              <span>Bid +{formatAmount(100000)}</span>
             </button>
           </div>
         </div>

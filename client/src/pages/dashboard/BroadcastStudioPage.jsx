@@ -12,12 +12,14 @@ import {
   Play
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/Card';
+import { useTournament } from '../../context/TournamentContext';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import Switch from '../../components/ui/Switch';
 import Input from '../../components/ui/Input';
 
 export default function BroadcastStudioPage() {
+  const { format, currencyCode, isPoints, formatAmount } = useTournament();
   const [streamKey, setStreamKey] = useState('obs_live_mca2026_9f81a7b2c4e5');
   const [copied, setCopied] = useState(false);
 
@@ -171,17 +173,17 @@ export default function BroadcastStudioPage() {
                     <div className="flex items-center gap-3 text-xs font-mono text-slate-300">
                       <span>Runs: <strong>1,540</strong></span>
                       <span>SR: <strong>138.4</strong></span>
-                      <span>Base: <strong>LKR 100,000</strong></span>
+                      <span>Base: <strong>{formatAmount(100000)}</strong></span>
                     </div>
                   </div>
                 </div>
 
                 <div className="text-right border-l border-white/10 pl-5">
                   <span className="text-[10px] uppercase font-bold text-crick-lime tracking-widest block">
-                    CURRENT BID
+                    CURRENT BID ({currencyCode})
                   </span>
                   <div className="font-mono text-2xl font-black text-white">
-                    LKR 850,000
+                    {formatAmount(850000)}
                   </div>
                   <span className="text-xs text-amber-400 font-bold">
                     Held by: Colombo Kings
@@ -198,7 +200,7 @@ export default function BroadcastStudioPage() {
                   <span className="font-bold text-crick-lime uppercase">LATEST DEALS:</span>
                 </div>
                 <div className="truncate ml-4 text-[11px] text-slate-300">
-                  Lot #17 Wanindu Hasaranga sold to Kandy Warriors for LKR 1,200,000 • Lot #16 Dushmantha Chameera sold to Galle Titans for LKR 650,000 • Lot #15 Charith Asalanka sold to Jaffna Stallions for LKR 750,000
+                  Lot #17 Wanindu Hasaranga sold to Kandy Warriors for {formatAmount(1200000)} • Lot #16 Dushmantha Chameera sold to Galle Titans for {formatAmount(650000)} • Lot #15 Charith Asalanka sold to Jaffna Stallions for {formatAmount(750000)}
                 </div>
               </div>
             )}

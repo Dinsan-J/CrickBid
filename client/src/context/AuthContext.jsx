@@ -76,6 +76,7 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{
       user,
+      setUser,
       isAuthenticated,
       currentRole: user?.role || ROLES.ORGANISER,
       roleLabel: ROLE_LABELS[user?.role] || 'User',

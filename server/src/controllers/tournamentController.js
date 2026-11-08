@@ -2,10 +2,18 @@ import { Tournament } from '../models/Tournament.js';
 import { AuctionSession } from '../models/AuctionSession.js';
 import { Player } from '../models/Player.js';
 import { Team } from '../models/Team.js';
+import { AuditLog } from '../models/AuditLog.js';
 
 export async function getActiveTournament(req, res) {
   try {
-    let tournament = await Tournament.findOne({ slug: 'mca-premier-league-2026' });
+    const { orgId } = req.query;
+
+    let query = {};
+    if (orgId) {
+      query.organisationId = orgId;
+    }
+
+    let tournament = await Tournament.findOne(query);
     if (!tournament) {
       tournament = await Tournament.findOne();
     }
@@ -37,7 +45,7 @@ export async function getActiveTournament(req, res) {
 export async function updateAuctionFormat(req, res) {
   try {
     const { id } = req.params;
-    const { format, userRole, resetAuction } = req.body;
+    const { format, resetAuction } = req.body;
 
     if (!['POINTS', 'MONEY'].includes(format)) {
       return res.status(400).json({
@@ -46,18 +54,30 @@ export async function updateAuctionFormat(req, res) {
       });
     }
 
-    // Role check: Only PLATFORM_ADMIN or ORGANISER can change format
-    const allowedRoles = ['PLATFORM_ADMIN', 'ORGANISER'];
-    if (userRole && !allowedRoles.includes(userRole)) {
+    // SERVER-AUTHORITATIVE ROLE CHECK:
+    // Only ORG_OWNER, ORG_ADMIN, TOURNAMENT_ORGANISER, TOURNAMENT_ADMIN, or SUPER_ADMIN can alter format.
+    // Never trust a role passed in req.body!
+    const effectiveRole = req.userContext?.effectiveRole || req.userContext?.orgRole || req.userContext?.tournamentRole;
+    const allowedRoles = ['SUPER_ADMIN', 'ORG_OWNER', 'ORG_ADMIN', 'TOURNAMENT_ORGANISER', 'TOURNAMENT_ADMIN'];
+
+    if (!req.userContext?.isSuperAdmin && (!effectiveRole || !allowedRoles.includes(effectiveRole))) {
       return res.status(403).json({
         success: false,
-        message: 'Permission denied: Only Tournament Organisers or Platform Administrators can modify tournament auction format.'
+        message: 'Permission denied: Only authorised Tournament Administrators can modify tournament auction format.'
       });
     }
 
     const tournament = await Tournament.findById(id);
     if (!tournament) {
       return res.status(404).json({ success: false, message: 'Tournament not found' });
+    }
+
+    // Cross-tenant IDOR validation: If orgId context exists, tournament must belong to it
+    if (req.userContext?.orgId && String(tournament.organisationId) !== String(req.userContext.orgId) && !req.userContext?.isSuperAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Cross-tenant violation: Tournament does not belong to your active organisation.'
+      });
     }
 
     const session = await AuctionSession.findOne({ tournamentId: tournament._id });
@@ -82,6 +102,17 @@ export async function updateAuctionFormat(req, res) {
         session.currentBidAmount = 0;
         await session.save();
       }
+
+      await AuditLog.create({
+        actorUserId: req.user?._id,
+        organisationId: tournament.organisationId,
+        tournamentId: tournament._id,
+        action: 'AUCTION_RESET',
+        entityType: 'Tournament',
+        entityId: String(tournament._id),
+        details: { resetByRole: effectiveRole },
+        ipAddress: req.ip || ''
+      });
     }
 
     // Persist new format in MongoDB
@@ -90,6 +121,17 @@ export async function updateAuctionFormat(req, res) {
     tournament.purseDisplay = format === 'POINTS' ? '100,000 Points' : 'LKR 10,000,000';
 
     await tournament.save();
+
+    await AuditLog.create({
+      actorUserId: req.user?._id,
+      organisationId: tournament.organisationId,
+      tournamentId: tournament._id,
+      action: 'AUCTION_FORMAT_UPDATED',
+      entityType: 'Tournament',
+      entityId: String(tournament._id),
+      details: { format, currencyCode: tournament.currencyCode },
+      ipAddress: req.ip || ''
+    });
 
     return res.json({
       success: true,

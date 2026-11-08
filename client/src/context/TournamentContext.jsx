@@ -5,7 +5,7 @@ import { useAuth, ROLES } from './AuthContext';
 const TournamentContext = createContext();
 
 export function TournamentProvider({ children }) {
-  const { currentRole } = useAuth();
+  const { currentRole, setUser } = useAuth();
   const [tournament, setTournament] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -18,10 +18,21 @@ export function TournamentProvider({ children }) {
       const res = await tournamentApi.getActive();
       if (res.success && res.data) {
         setTournament(res.data);
+        if (setUser) {
+          setUser(prev => ({
+            ...prev,
+            activeTournament: {
+              id: res.data._id,
+              name: res.data.name,
+              auctionType: res.data.auctionType,
+              currency: res.data.currencyCode,
+              status: res.data.status
+            }
+          }));
+        }
       }
     } catch (err) {
       console.warn('Could not fetch active tournament from backend:', err.message);
-      // Fallback local defaults if server temporarily unreachable
       setTournament({
         _id: 'default_trn',
         name: 'MCA Premier League 2026',
@@ -34,7 +45,7 @@ export function TournamentProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setUser]);
 
   useEffect(() => {
     fetchTournament();
@@ -73,11 +84,24 @@ export function TournamentProvider({ children }) {
       );
 
       if (res.success && res.data) {
-        setTournament(prev => ({
-          ...prev,
+        const updated = {
+          ...tournament,
           ...res.data,
-          hasStartedBidding: explicitReset ? false : prev.hasStartedBidding
-        }));
+          auctionType: targetFormat,
+          currencyCode: targetFormat === 'POINTS' ? 'PTS' : 'LKR',
+          hasStartedBidding: explicitReset ? false : tournament.hasStartedBidding
+        };
+        setTournament(updated);
+        if (setUser) {
+          setUser(prev => ({
+            ...prev,
+            activeTournament: {
+              ...prev?.activeTournament,
+              auctionType: updated.auctionType,
+              currency: updated.currencyCode
+            }
+          }));
+        }
         setResetPrompt(null);
       }
     } catch (err) {
@@ -113,6 +137,47 @@ export function TournamentProvider({ children }) {
     }
   };
 
+  const isPoints = (tournament?.auctionType || 'MONEY') === 'POINTS';
+  const isMoney = !isPoints;
+  const currentFormat = isPoints ? 'POINTS' : 'MONEY';
+  const currentCurrency = isPoints ? 'PTS' : 'LKR';
+
+  /**
+   * Universally formats any monetary amount or point value depending on active format
+   * e.g. 850000 in MONEY -> "LKR 850,000"
+   * e.g. 850000 in POINTS -> "8,500 PTS"
+   */
+  const formatAmount = (num) => {
+    if (num === null || num === undefined) return '—';
+    const val = Number(num);
+    if (isNaN(val)) return num;
+
+    if (isPoints) {
+      const pts = Math.round(val / 100);
+      return `${pts.toLocaleString()} PTS`;
+    }
+    return `LKR ${val.toLocaleString()}`;
+  };
+
+  /**
+   * Short representation for badges / counters
+   * e.g. "LKR 38.4M" or "384,000 PTS"
+   */
+  const formatCompact = (num) => {
+    if (num === null || num === undefined) return '—';
+    const val = Number(num);
+    if (isNaN(val)) return num;
+
+    if (isPoints) {
+      const pts = Math.round(val / 100);
+      return `${pts.toLocaleString()} PTS`;
+    }
+    if (val >= 1000000) {
+      return `LKR ${(val / 1000000).toFixed(1)}M`;
+    }
+    return `LKR ${val.toLocaleString()}`;
+  };
+
   return (
     <TournamentContext.Provider
       value={{
@@ -120,15 +185,19 @@ export function TournamentProvider({ children }) {
         loading,
         isUpdating,
         error,
-        format: tournament?.auctionType || 'MONEY',
-        currencyCode: tournament?.currencyCode || 'LKR',
+        format: currentFormat,
+        currencyCode: currentCurrency,
+        isPoints,
+        isMoney,
         hasStartedBidding: Boolean(tournament?.hasStartedBidding),
         resetPrompt,
         switchFormat,
         confirmResetAndSwitch,
         cancelResetPrompt,
         toggleBiddingLock,
-        refreshTournament: fetchTournament
+        refreshTournament: fetchTournament,
+        formatAmount,
+        formatCompact
       }}
     >
       {children}

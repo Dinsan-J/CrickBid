@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Gavel, CheckCircle2, XCircle, ArrowUp, RefreshCw, Radio, Sparkles, Coins, Users } from 'lucide-react';
+import { useTournament } from '../../context/TournamentContext';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 
 export default function InteractiveAuctionDemo() {
+  const { format, currencyCode, isPoints, formatAmount, formatCompact } = useTournament();
   const players = [
     {
       id: 'p1',
@@ -148,7 +150,7 @@ export default function InteractiveAuctionDemo() {
                 {selectedPlayer.stats}
               </p>
               <div className="text-xs font-mono text-slate-300 mt-2">
-                Base Price: <strong>LKR {selectedPlayer.basePrice.toLocaleString()}</strong>
+                Base Price: <strong>{formatAmount(selectedPlayer.basePrice)}</strong>
               </div>
             </div>
           </div>
@@ -156,7 +158,7 @@ export default function InteractiveAuctionDemo() {
           {/* Current Highest Bid Card */}
           <div className="p-5 rounded-2xl bg-gradient-to-b from-crick-navy to-crick-surface border border-emerald-500/30 text-center relative overflow-hidden">
             <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400">
-              CURRENT HIGHEST BID
+              CURRENT HIGHEST BID ({currencyCode})
             </span>
 
             <motion.div
@@ -165,7 +167,7 @@ export default function InteractiveAuctionDemo() {
               animate={{ scale: 1, opacity: 1 }}
               className="text-3xl sm:text-4xl font-black font-mono text-white tracking-tight my-1"
             >
-              LKR {currentBid.toLocaleString()}
+              {formatAmount(currentBid)}
             </motion.div>
 
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-crick-surface border border-crick-border text-xs text-slate-300">
@@ -182,7 +184,7 @@ export default function InteractiveAuctionDemo() {
               )}
               {hammerStatus === 'GOING_ONCE' && (
                 <span className="text-xs font-mono font-bold text-amber-400 animate-pulse">
-                  🔨 Going Once at LKR {currentBid.toLocaleString()}!
+                  🔨 Going Once at {formatAmount(currentBid)}!
                 </span>
               )}
               {hammerStatus === 'GOING_TWICE' && (
@@ -196,7 +198,7 @@ export default function InteractiveAuctionDemo() {
                   animate={{ scale: 1, opacity: 1 }}
                   className="inline-block py-1 px-4 rounded-xl bg-emerald-500 text-slate-950 font-mono font-black text-sm tracking-wider uppercase shadow-glow-emerald"
                 >
-                  SOLD to {highestBidder.name}!
+                  SOLD to {highestBidder.name} for {formatAmount(currentBid)}!
                 </motion.div>
               )}
             </div>
@@ -206,7 +208,7 @@ export default function InteractiveAuctionDemo() {
         {/* Right: Competing Bidders & Master Controls (7 Cols) */}
         <div className="lg:col-span-7 space-y-4">
           <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-            Simulate Bids from Franchises:
+            Simulate Bids from Franchises ({currencyCode}):
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -221,7 +223,7 @@ export default function InteractiveAuctionDemo() {
                     <strong className="text-white">{t.name}</strong>
                   </div>
                   <span className="font-mono text-slate-400 text-[11px]">
-                    Rem: LKR {(t.budget / 1000000).toFixed(2)}M
+                    Rem: {formatCompact(t.budget)}
                   </span>
                 </div>
 
@@ -232,7 +234,7 @@ export default function InteractiveAuctionDemo() {
                     className="flex-1 py-1.5 px-2 rounded-lg bg-crick-navy hover:bg-crick-card disabled:opacity-40 text-[11px] font-bold text-slate-200 border border-crick-border flex items-center justify-center gap-1 transition-all active:scale-95"
                   >
                     <ArrowUp className="w-3 h-3 text-emerald-400" />
-                    +25K
+                    +{isPoints ? '250 PTS' : '25K'}
                   </button>
                   <button
                     disabled={hammerStatus === 'SOLD'}
@@ -240,7 +242,7 @@ export default function InteractiveAuctionDemo() {
                     className="flex-1 py-1.5 px-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 disabled:opacity-40 text-[11px] font-bold text-emerald-400 border border-emerald-500/30 flex items-center justify-center gap-1 transition-all active:scale-95"
                   >
                     <ArrowUp className="w-3 h-3 text-emerald-400" />
-                    +50K
+                    +{isPoints ? '500 PTS' : '50K'}
                   </button>
                 </div>
               </div>

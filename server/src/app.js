@@ -3,6 +3,9 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import authRoutes from './routes/authRoutes.js';
+import onboardingRoutes from './routes/onboardingRoutes.js';
+import organisationRoutes from './routes/organisationRoutes.js';
 import tournamentRoutes from './routes/tournamentRoutes.js';
 import playerRoutes from './routes/playerRoutes.js';
 import teamRoutes from './routes/teamRoutes.js';
@@ -29,6 +32,9 @@ app.get('/api/health', (req, res) => {
 });
 
 // API Routes
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/onboarding', onboardingRoutes);
+app.use('/api/v1/organisations', organisationRoutes);
 app.use('/api/v1/tournaments', tournamentRoutes);
 app.use('/api/v1/players', playerRoutes);
 app.use('/api/v1/teams', teamRoutes);

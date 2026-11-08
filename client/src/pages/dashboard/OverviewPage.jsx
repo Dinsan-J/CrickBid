@@ -14,6 +14,7 @@ import {
   Clock
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useTournament } from '../../context/TournamentContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
@@ -21,12 +22,13 @@ import Table from '../../components/ui/Table';
 
 export default function OverviewPage() {
   const { user, roleLabel } = useAuth();
+  const { format, currencyCode, isPoints, formatAmount, formatCompact } = useTournament();
 
   const statCards = [
     {
       title: 'Active Tournaments',
       value: '3',
-      subtext: '1 Live Now (MCA Premier)',
+      subtext: `1 Live Now (${user?.activeTournament?.name || 'MCA Premier'})`,
       icon: Trophy,
       color: 'lime',
       badge: 'Active'
@@ -40,9 +42,9 @@ export default function OverviewPage() {
       badge: '+34 today'
     },
     {
-      title: 'Total Purse Spent',
-      value: 'LKR 38.4M',
-      subtext: 'Out of LKR 60.0M Total Purser Pool',
+      title: `Total Purse Spent (${currencyCode})`,
+      value: formatCompact(38400000),
+      subtext: `Out of ${formatCompact(60000000)} Total Purse Pool`,
       icon: Coins,
       color: 'amber',
       badge: '64% Allocated'
@@ -65,7 +67,7 @@ export default function OverviewPage() {
       category: 'ICON',
       role: 'Top Order Bat',
       team: 'Colombo Kings',
-      amount: 'LKR 850,000',
+      amount: formatAmount(850000),
       time: '1 min ago',
       status: 'Current High Bid'
     },
@@ -76,7 +78,7 @@ export default function OverviewPage() {
       category: 'ICON',
       role: 'Spin All-Rounder',
       team: 'Kandy Warriors',
-      amount: 'LKR 1,200,000',
+      amount: formatAmount(1200000),
       time: '6 mins ago',
       status: 'Sold'
     },
@@ -87,7 +89,7 @@ export default function OverviewPage() {
       category: 'PLATINUM',
       role: 'Fast Bowler',
       team: 'Galle Titans',
-      amount: 'LKR 650,000',
+      amount: formatAmount(650000),
       time: '14 mins ago',
       status: 'Sold'
     },
@@ -98,7 +100,7 @@ export default function OverviewPage() {
       category: 'PLATINUM',
       role: 'Middle Order Bat',
       team: 'Jaffna Stallions',
-      amount: 'LKR 750,000',
+      amount: formatAmount(750000),
       time: '22 mins ago',
       status: 'Sold'
     }
@@ -213,15 +215,15 @@ export default function OverviewPage() {
             </h2>
 
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              Current highest bid <strong className="text-crick-lime font-mono">LKR 850,000</strong> held by <strong className="text-white">Colombo Kings</strong>. Hammer stage: <span className="text-amber-400 font-bold">Going Twice...</span>
+              Current highest bid <strong className="text-crick-lime font-mono">{formatAmount(850000)}</strong> held by <strong className="text-white">Colombo Kings</strong>. Hammer stage: <span className="text-amber-400 font-bold">Going Twice...</span>
             </p>
 
             <div className="flex items-center gap-4 pt-1 text-xs font-mono text-crick-textMuted">
-              <span>Next Bid: <strong>LKR 900,000</strong></span>
+              <span>Next Bid: <strong>{formatAmount(900000)}</strong></span>
               <span>•</span>
               <span>Timer: <strong className="text-red-400">00:08s</strong></span>
               <span>•</span>
-              <span>Purse Remaining: <strong>LKR 3,450,000</strong></span>
+              <span>Purse Remaining: <strong>{formatAmount(3450000)}</strong></span>
             </div>
           </div>
 

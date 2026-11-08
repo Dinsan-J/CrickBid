@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, Plus, Calendar, Radio, Coins, Users, Tv2, MoreVertical, Settings } from 'lucide-react';
+import { useTournament } from '../../context/TournamentContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
@@ -9,19 +10,20 @@ import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 
 export default function TournamentsPage() {
+  const { tournament, format, currencyCode, isPoints } = useTournament();
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const tournaments = [
     {
-      id: 'trn_2026_mca_a',
-      name: 'MCA Premier League 2026',
+      id: tournament?._id || 'trn_2026_mca_a',
+      name: tournament?.name || 'MCA Premier League 2026',
       season: '2026',
-      status: 'AUCTION_LIVE',
-      auctionType: 'MONEY',
-      currency: 'LKR',
-      pursePerTeam: 'LKR 10,000,000',
-      totalTeams: 6,
-      registeredPlayers: 94,
+      status: tournament?.status || 'AUCTION_LIVE',
+      auctionType: format,
+      currency: currencyCode,
+      pursePerTeam: isPoints ? '100,000 Points' : 'LKR 10,000,000',
+      totalTeams: tournament?.teamCount || 4,
+      registeredPlayers: tournament?.playerCount || 9,
       squadLimits: '11 - 15 Players (Max 2 Overseas)',
       startDate: 'Live Right Now',
       isLive: true

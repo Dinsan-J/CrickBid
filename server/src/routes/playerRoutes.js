@@ -7,10 +7,10 @@ import {
   getPlayerById,
   updatePlayerStatus
 } from '../controllers/playerController.js';
+import { authenticate, resolveContext, optionalAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Setup Multer Storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/');
@@ -23,7 +23,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
@@ -33,9 +33,14 @@ const upload = multer({
   }
 });
 
+// Public player registration (self-service)
 router.post('/register', upload.single('photo'), registerPlayer);
-router.get('/', getPlayers);
-router.get('/:id', getPlayerById);
-router.patch('/:id/status', updatePlayerStatus);
+
+// List & view players
+router.get('/', optionalAuth, resolveContext, getPlayers);
+router.get('/:id', optionalAuth, resolveContext, getPlayerById);
+
+// Organiser review approval / rejection (strictly server-authoritative)
+router.patch('/:id/status', authenticate, resolveContext, updatePlayerStatus);
 
 export default router;
